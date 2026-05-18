@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manajemen Kategori - UKK Siswa</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="container" id="contentArea">
+      <h2>Master Data Kategori</h2>
+
+      <form
+        id="formKategori"
+        data-table="tb_kategori"
+        onsubmit="submitData(event, 'tb_kategori', 'tabelKategori')"
+      >
+        <input type="hidden" name="id_kategori" />
+
+        <div class="form-group">
+          <label>Keterangan Kategori</label>
+          <input
+            type="text"
+            name="ket_kategori"
+            placeholder="Contoh: Fasilitas Kelas"
+            required
+          />
+        </div>
+
+        <div class="full-width">
+          <button type="submit" class="btn btn-save">Simpan Data</button>
+          <button
+            type="reset"
+            class="btn"
+            style="background: #95a5a6; color: white"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
+
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Cari kategori..."
+          onkeyup="muatTabel('tb_kategori', 'tabelKategori', this.value)"
+        />
+      </div>
+
+      <div class="table-responsive">
+        <table id="tabelAdmin" data-source="tb_kategori">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+  </body>
+</html>
