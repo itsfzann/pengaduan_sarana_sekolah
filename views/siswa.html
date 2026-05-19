@@ -3,22 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manajemen Siswa - UKK Siswa</title>
-    <link rel="stylesheet" href="../css/siswa.css" />
+    <title>Manajemen Siswa - Universal System</title>
+
+    <link rel="stylesheet" href="../css/layout.css?v=2" />
+    <link rel="stylesheet" href="../css/siswa.css?v=2" />
   </head>
+
   <body>
-    <div class="container" id="contentArea">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">🎓</div>
+
+          <div class="title">
+            <strong>Universal System</strong>
+            <span>Manajemen Data</span>
+          </div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="nav" aria-label="Navigasi Utama">
+          <a href="admin.html">Admin</a>
+          <a href="siswa.html">Siswa</a>
+          <a href="kategori.html">Kategori</a>
+          <a href="aspirasi.html">Aspirasi</a>
+
+          <button class="app-btn-ghost" type="button" onclick="logout()">
+            Logout
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="app-container" id="contentArea">
       <h2>Master Data Siswa</h2>
 
+      <!-- FORM -->
       <form
         id="formSiswa"
         data-table="tb_siswa"
         onsubmit="submitData(event, 'tb_siswa', 'tabelSiswa')"
       >
-        <input type="hidden" name="NIS" />
-
         <div class="form-group">
-          <label>NIS (Nomor Induk Siswa)</label>
+          <label>NIS</label>
           <input type="number" name="NIS" required />
         </div>
 
@@ -29,19 +58,16 @@
 
         <div class="form-group">
           <label>Kelas</label>
-          <input
-            type="text"
-            name="kelas"
-            placeholder="Contoh : XI RPL B"
-            required
-          />
+          <input type="text" name="kelas" required />
         </div>
 
+        <!-- BUTTON -->
         <div class="full-width">
-          <button type="submit" class="btn btn-save">Simpan Data</button>
+          <button type="submit" class="app-btn btn-save">Simpan Data</button>
+
           <button
             type="reset"
-            class="btn"
+            class="app-btn"
             style="background: #95a5a6; color: white"
           >
             Reset
@@ -49,6 +75,7 @@
         </div>
       </form>
 
+      <!-- SEARCH -->
       <div class="search-box">
         <input
           type="text"
@@ -57,13 +84,16 @@
         />
       </div>
 
+      <!-- TABLE -->
       <div class="table-responsive">
         <table id="tabelSiswa" data-source="tb_siswa">
-          </tbody>
+          <thead></thead>
+          <tbody></tbody>
         </table>
       </div>
     </div>
 
-    <script src="../js/script.js"></script>
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
   </body>
 </html>

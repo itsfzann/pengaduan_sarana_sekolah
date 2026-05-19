@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Universal System</title>
+
+    <link rel="stylesheet" href="../css/layout.css" />
+  </head>
+
+  <body>
+    <div class="page-center">
+      <div class="auth-card" role="region" aria-label="Form Login">
+        <div class="auth-brand">
+          <div class="brand-mark">🏫</div>
+
+          <div>
+            <div class="brand-title">Universal System</div>
+            <div class="brand-sub">Login untuk mengelola data</div>
+          </div>
+        </div>
+
+        <form id="formLogin" class="auth-form">
+          <div class="form-group">
+            <label>Username</label>
+
+            <input
+              type="text"
+              id="username"
+              placeholder="Masukkan username"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+
+            <input
+              type="password"
+              id="password"
+              placeholder="Masukkan password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn btn-save">Masuk</button>
+
+          <div id="loginMsg" class="auth-message"></div>
+        </form>
+
+        <div class="auth-footer">
+          <span>Demo Login : admin / admin</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("formLogin");
+      const msg = document.getElementById("loginMsg");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        // LOGIN DEMO
+        if (username === "admin" && password === "admin") {
+          msg.style.color = "green";
+          msg.textContent = "Login berhasil, redirect...";
+
+          // Simpan session demo di localStorage untuk dashboard SPA
+          localStorage.setItem("role", "admin");
+          localStorage.setItem("nama", "Admin");
+          localStorage.setItem("user_id", "");
+
+          setTimeout(() => {
+            window.location.href = "dashboard.html#/dashboard";
+          }, 1000);
+        } else {
+          msg.style.color = "red";
+          msg.textContent = "Username atau password salah!";
+        }
+      });
+    </script>
+  </body>
+</html>

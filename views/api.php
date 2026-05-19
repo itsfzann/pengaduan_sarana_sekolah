@@ -10,16 +10,198 @@ $table  = $_GET['table'] ?? '';
 $action = $_GET['action'] ?? '';
 $auth   = $_GET['auth'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
+$endpoint = $_GET['endpoint'] ?? '';
+
+// --- DASHBOARD ENDPOINT (SPA) ---
+if (!empty($endpoint)) {
+    // NOTE: endpoint khusus dashboard SPA, tidak mengganggu CRUD tabel.
+
+    $now = date('Y-m-d');
+
+
+    // KPI admin: waiting/proses/selesai asumsi status di tb_aspirasi kolom 'status'
+    if ($endpoint === 'dashboard_kpi') {
+        // fallback jika kolom status tidak ada akan error; untuk saat ini gunakan string statis yang umum.
+        $waiting = 0;
+        $proses  = 0;
+        $selesai = 0;
+
+        // Deteksi apakah kolom status ada (best effort)
+        $colsRes = mysqli_query($conn, "SHOW COLUMNS FROM tb_aspirasi LIKE 'status'");
+        if ($colsRes && mysqli_num_rows($colsRes) > 0) {
+            $qWaiting = mysqli_query($conn, "SELECT COUNT(*) AS c FROM tb_aspirasi WHERE status='Menunggu'");
+            $qProses  = mysqli_query($conn, "SELECT COUNT(*) AS c FROM tb_aspirasi WHERE status='Proses'");
+            $qSelesai = mysqli_query($conn, "SELECT COUNT(*) AS c FROM tb_aspirasi WHERE status='Selesai'");
+            $waiting = ($qWaiting) ? (int)mysqli_fetch_assoc($qWaiting)['c'] : 0;
+            $proses  = ($qProses) ? (int)mysqli_fetch_assoc($qProses)['c'] : 0;
+            $selesai = ($qSelesai) ? (int)mysqli_fetch_assoc($qSelesai)['c'] : 0;
+        }
+
+        echo json_encode(["status" => "success", "data" => [
+            "waiting" => $waiting,
+            "proses"  => $proses,
+            "selesai" => $selesai
+        ]]);
+        exit;
+    }
+
+    // Top kategori bulan ini: asumsi relasi tb_aspirasi -> tb_kategori melalui id_kategori atau join tb_input_aspirasi
+    if ($endpoint === 'dashboard_top_kategori_bulan_ini') {
+        // Best-effort query: join tb_input_aspirasi + tb_aspirasi + tb_kategori + tb_input_aspirasi.tgl_pelaporan
+        $bulan = date('m');
+        $tahun = date('Y');
+
+        $sql = "SELECT k.ket_kategori AS kategori, COUNT(*) AS jumlah
+                FROM tb_input_aspirasi i
+                JOIN tb_kategori k ON k.id_kategori = i.id_kategori
+                WHERE MONTH(i.tgl_pelaporan) = '$bulan' AND YEAR(i.tgl_pelaporan) = '$tahun'
+                GROUP BY k.id_kategori, k.ket_kategori
+                ORDER BY jumlah DESC
+                LIMIT 6";
+
+        $res = mysqli_query($conn, $sql);
+        $rows = [];
+        if ($res) {
+            while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        }
+        echo json_encode(["status" => "success", "data" => $rows]);
+        exit;
+    }
+
+    // Tren 6 bulan: agregasi per bulan + kategori
+    if ($endpoint === 'dashboard_tren_6_bulan') {
+        $sql = "SELECT DATE_FORMAT(i.tgl_pelaporan,'%Y-%m') AS bulan,
+                       k.ket_kategori AS kategori,
+                       COUNT(*) AS jumlah
+                FROM tb_input_aspirasi i
+                JOIN tb_kategori k ON k.id_kategori = i.id_kategori
+                WHERE i.tgl_pelaporan >= DATE_SUB(CURDATE(), INTERVAL 5 MONTH)
+                GROUP BY bulan, k.id_kategori, k.ket_kategori
+                ORDER BY bulan ASC";
+
+        $res = mysqli_query($conn, $sql);
+        $rows = [];
+        if ($res) {
+            while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        }
+        echo json_encode(["status" => "success", "data" => $rows]);
+        exit;
+    }
+
+    // Drill down: detail aspirasi per kategori + rentang
+    if ($endpoint === 'dashboard_drill') {
+        $kategori = $_GET['kategori'] ?? '';
+        $rentang = $_GET['rentang'] ?? 'bulan_ini';
+
+        // cari id_kategori dari ket_kategori
+        $id_k = '';
+        $q = mysqli_query($conn, "SELECT id_kategori FROM tb_kategori WHERE ket_kategori='" . mysqli_real_escape_string($conn,$kategori) . "' LIMIT 1");
+        if ($q && mysqli_num_rows($q) > 0) $id_k = mysqli_fetch_assoc($q)['id_kategori'];
+
+        if ($id_k === '') {
+            echo json_encode(["status" => "success", "data" => []]);
+            exit;
+        }
+
+        $where = " i.id_kategori='" . mysqli_real_escape_string($conn,$id_k) . "' ";
+        if ($rentang === 'bulan_ini') {
+            $where .= " AND MONTH(i.tgl_pelaporan)=MONTH(CURDATE()) AND YEAR(i.tgl_pelaporan)=YEAR(CURDATE()) ";
+        } elseif ($rentang === '6_bulan') {
+            $where .= " AND i.tgl_pelaporan >= DATE_SUB(CURDATE(), INTERVAL 5 MONTH) ";
+        }
+
+        $sql = "SELECT i.id_pelaporan, i.nis, i.lokasi, i.ket, a.status
+                FROM tb_input_aspirasi i
+                LEFT JOIN tb_aspirasi a ON a.id_pelaporan = i.id_pelaporan
+                WHERE $where
+                ORDER BY i.id_pelaporan DESC";
+
+        $res = mysqli_query($conn, $sql);
+        $rows = [];
+        if ($res) {
+            while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        }
+
+        echo json_encode(["status" => "success", "data" => $rows]);
+        exit;
+    }
+
+    // Progres siswa (best-effort): agregasi per bulan untuk nis user jika tersedia
+    if ($endpoint === 'dashboard_progres_siswa') {
+        $user_id = $_GET['user_id'] ?? '';
+        $nis = '';
+        if (!empty($user_id)) {
+            // asumsikan tb_siswa memiliki username/id terhubung ke tb_user? tidak jelas.
+            // fallback: gunakan user_id sebagai NIS jika memang sama.
+            $nis = $user_id;
+        }
+
+        $sql = "SELECT DATE_FORMAT(i.tgl_pelaporan,'%Y-%m') AS bulan,
+                       SUM(CASE WHEN a.status='Menunggu' THEN 1 ELSE 0 END) AS menunggu,
+                       SUM(CASE WHEN a.status='Proses' THEN 1 ELSE 0 END) AS proses,
+                       SUM(CASE WHEN a.status='Selesai' THEN 1 ELSE 0 END) AS selesai
+                FROM tb_input_aspirasi i
+                LEFT JOIN tb_aspirasi a ON a.id_pelaporan = i.id_pelaporan
+                WHERE i.nis='" . mysqli_real_escape_string($conn,$nis) . "'
+                GROUP BY bulan
+                ORDER BY bulan DESC
+                LIMIT 6";
+
+        $res = mysqli_query($conn, $sql);
+        $rows = [];
+        if ($res) {
+            while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        }
+        echo json_encode(["status" => "success", "data" => array_reverse($rows)]);
+        exit;
+    }
+
+    // Gamifikasi (best-effort): poin = selesai*10 + proses*5, progress = poin%100
+    if ($endpoint === 'dashboard_gamification') {
+        $user_id = $_GET['user_id'] ?? '';
+        $nis = $user_id;
+
+        $sql = "SELECT
+                    SUM(CASE WHEN a.status='Selesai' THEN 1 ELSE 0 END) AS selesai_cnt,
+                    SUM(CASE WHEN a.status='Proses' THEN 1 ELSE 0 END) AS proses_cnt
+                FROM tb_input_aspirasi i
+                LEFT JOIN tb_aspirasi a ON a.id_pelaporan = i.id_pelaporan
+                WHERE i.nis='" . mysqli_real_escape_string($conn,$nis) . "'";
+
+        $res = mysqli_query($conn, $sql);
+        $row = ($res) ? mysqli_fetch_assoc($res) : null;
+        $selesaiCnt = (int)($row['selesai_cnt'] ?? 0);
+        $prosesCnt = (int)($row['proses_cnt'] ?? 0);
+
+        $poin = $selesaiCnt * 10 + $prosesCnt * 5;
+        $level = (int)floor($poin / 100) + 1;
+        $progress = $poin % 100;
+
+        echo json_encode(["status" => "success", "data" => [
+            "poin" => $poin,
+            "level" => $level,
+            "progress" => $progress
+        ]]);
+        exit;
+    }
+}
+
+
 
 // --- 2. FITUR AUTH (Login & Logout) ---
 if (!empty($auth)) {
     if ($auth == 'login') {
-        $username = mysqli_real_escape_string($conn, $_POST['username'] ?? '');
-        $password = md5($_POST['password'] ?? '');
+        $username = $_POST['username'] ?? '';
+        $passwordRaw = $_POST['password'] ?? '';
+        $passwordHash = md5($passwordRaw);
 
-        $sql = "SELECT * FROM tb_user WHERE username='$username' AND password='$password'";
-        $res = mysqli_query($conn, $sql);
+        // Catatan: password tetap menggunakan md5 agar kompatibel dengan data yang sudah ada.
+        $stmt = mysqli_prepare($conn, "SELECT * FROM tb_user WHERE username=? AND password=? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "ss", $username, $passwordHash);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
         $user = mysqli_fetch_assoc($res);
+        mysqli_stmt_close($stmt);
 
         if ($user) {
             $_SESSION['user_id'] = $user['id_user'];

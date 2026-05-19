@@ -1,45 +1,113 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manajemen Admin - Universal System</title>
-    <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
 
-<div class="container" id="contentArea">
-    <h2>Master Data Admin</h2>
+    <link rel="stylesheet" href="../css/layout.css?v=2" />
+    <link rel="stylesheet" href="../css/admin.css?v=2" />
+  </head>
 
-    <form id="formAdmin" data-table="tb_admin" onsubmit="submitData(event, 'tb_admin', 'tabelAdmin')">
-        
+  <body>
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">🧠</div>
+
+          <div class="title">
+            <strong>Universal System</strong>
+            <span>Manajemen Data</span>
+          </div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="nav" aria-label="Navigasi Utama">
+          <a href="admin.html">Admin</a>
+          <a href="siswa.html">Siswa</a>
+          <a href="kategori.html">Kategori</a>
+          <a href="aspirasi.html">Aspirasi</a>
+
+          <button class="app-btn-ghost" type="button" onclick="logout()">
+            Logout
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="app-container" id="contentArea">
+      <h2>Master Data Admin</h2>
+
+      <!-- FORM -->
+      <form
+        id="formAdmin"
+        data-table="tb_admin"
+        onsubmit="submitData(event, 'tb_admin', 'tabelAdmin')"
+      >
         <div class="form-group">
-            <label>Username</label>
-            <input type="text" name="username" required>
+          <label>Username</label>
+          <input type="text" name="username" required />
         </div>
 
         <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" required>
+          <label>Password</label>
+          <input type="password" name="password" required />
         </div>
-        
+
         <div class="full-width">
-            <button type="submit" class="btn btn-save">Simpan Data</button>
-            <button type="reset" class="btn" style="background:#95a5a6; color:white;">Reset</button>
+          <button type="submit" class="app-btn btn-save">Simpan Data</button>
+
+          <button
+            type="reset"
+            class="app-btn"
+            style="background: #95a5a6; color: white"
+          >
+            Reset
+          </button>
         </div>
-    </form>
+      </form>
 
-    <div class="search-box">
-        <input type="text" placeholder="Cari admin..." onkeyup="muatTabel('tb_admin', 'tabelAdmin', this.value)">
-    </div>
+      <!-- SEARCH -->
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Cari admin..."
+          onkeyup="muatTabel('tb_admin', 'tabelAdmin', this.value)"
+        />
+      </div>
 
-    <div class="table-responsive">
+      <!-- TABLE -->
+      <div class="table-responsive">
         <table id="tabelAdmin" data-source="tb_admin">
-            <thead></thead>
-            <tbody></tbody>
+          <thead></thead>
+          <tbody></tbody>
         </table>
+      </div>
     </div>
-</div>
 
-<script src="script.js"></script>
-</body>
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
+
+    <script>
+      const API = "api.php";
+
+      async function logout() {
+        try {
+          const res = await fetch(`${API}?auth=logout`);
+          const hasil = await res.json();
+
+          if (hasil.status === "success") {
+            window.location.href = "login.html";
+          } else {
+            alert(hasil.message || "Gagal logout");
+          }
+        } catch (e) {
+          console.error(e);
+          alert("Gagal logout");
+        }
+      }
+    </script>
+  </body>
 </html>

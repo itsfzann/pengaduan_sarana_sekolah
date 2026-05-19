@@ -3,35 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manajemen Kategori - UKK Siswa</title>
-    <link rel="stylesheet" href="../css/style.css" />
+    <title>Data Kategori - Universal System</title>
+
+    <link rel="stylesheet" href="../css/layout.css?v=2" />
+    <link rel="stylesheet" href="../css/kategori.css?v=2" />
   </head>
+
   <body>
-    <div class="container" id="contentArea">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">📚</div>
+
+          <div class="title">
+            <strong>Universal System</strong>
+            <span>Manajemen Data</span>
+          </div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="nav" aria-label="Navigasi Utama">
+          <a href="admin.html">Admin</a>
+          <a href="siswa.html">Siswa</a>
+          <a href="kategori.html">Kategori</a>
+          <a href="aspirasi.html">Aspirasi</a>
+
+          <button class="app-btn-ghost" type="button" onclick="logout()">
+            Logout
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="app-container" id="contentArea">
       <h2>Master Data Kategori</h2>
 
+      <!-- FORM -->
       <form
         id="formKategori"
         data-table="tb_kategori"
         onsubmit="submitData(event, 'tb_kategori', 'tabelKategori')"
       >
-        <input type="hidden" name="id_kategori" />
+        <div class="form-group">
+          <label>ID Kategori</label>
+          <input type="number" name="id_kategori" required />
+        </div>
 
         <div class="form-group">
           <label>Keterangan Kategori</label>
+
           <input
             type="text"
             name="ket_kategori"
-            placeholder="Contoh: Fasilitas Kelas"
+            placeholder="Masukkan kategori..."
             required
           />
         </div>
 
+        <!-- BUTTON -->
         <div class="full-width">
-          <button type="submit" class="btn btn-save">Simpan Data</button>
+          <button type="submit" class="app-btn btn-save">Simpan Data</button>
+
           <button
             type="reset"
-            class="btn"
+            class="app-btn"
             style="background: #95a5a6; color: white"
           >
             Reset
@@ -39,6 +76,7 @@
         </div>
       </form>
 
+      <!-- SEARCH -->
       <div class="search-box">
         <input
           type="text"
@@ -47,14 +85,16 @@
         />
       </div>
 
+      <!-- TABLE -->
       <div class="table-responsive">
-        <table id="tabelAdmin" data-source="tb_kategori">
+        <table id="tabelKategori" data-source="tb_kategori">
           <thead></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
 
-    <script src="../js/script.js"></script>
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
   </body>
 </html>
