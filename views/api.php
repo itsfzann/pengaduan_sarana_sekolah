@@ -3,7 +3,7 @@ session_start();
 header('Content-Type: application/json');
 
 // --- 1. KONEKSI ---
-$conn = mysqli_connect("localhost", "root", "", "db_pengaduan_sarana");
+$conn = mysqli_connect("localhost", "root", "", "pengaduan_sarana");
 if (!$conn) die(json_encode(["status" => "error", "message" => "Koneksi Gagal"]));
 
 $table  = $_GET['table'] ?? '';
