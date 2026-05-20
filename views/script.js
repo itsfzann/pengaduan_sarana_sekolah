@@ -12,9 +12,23 @@ async function muatTabel(table, elementId, keyword = "") {
   try {
     const url = `${API}?table=${table}&search=${encodeURIComponent(keyword)}`;
     const res = await fetch(url);
-    let data = await res.json();
+    // Pastikan respons bisa diparse sebagai JSON
+    // Jika tidak, tampilkan body mentah untuk membantu debugging.
+    let data;
+    try {
+      data = await res.json();
+    } catch (jsonErr) {
+      const txt = await res.text().catch(() => "");
+      console.error("Response (muatTabel) bukan JSON:", {
+        url,
+        status: res.status,
+        txt,
+      });
+      throw jsonErr;
+    }
 
     // --- LOGIKA TAMBAHAN (SINKRONISASI FORMAT) ---
+
     // Jika data dibungkus dalam {status:..., data:...}, ambil bagian data-nya saja
     if (data && data.status && data.data) {
       data = data.data;
@@ -102,7 +116,23 @@ async function submitData(event, table, elementId) {
       method: "POST",
       body: formData,
     });
-    const hasil = await res.json();
+
+    let hasil;
+    try {
+      hasil = await res.json();
+    } catch (jsonErr) {
+      const txt = await res.text().catch(() => "");
+      console.error("Response (submitData) bukan JSON:", {
+        url,
+        status: res.status,
+        txt,
+      });
+      alert(
+        "Gagal: Server mengembalikan respons tidak valid (bukan JSON)." +
+          (txt ? "\n" + txt.slice(0, 500) : ""),
+      );
+      return;
+    }
 
     if (hasil.status === "success") {
       alert(hasil.message || "Proses berhasil!");

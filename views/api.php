@@ -1,10 +1,33 @@
 <?php
 session_start();
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
+
+// Hindari output non-JSON (warning/notice) yang bisa membuat fetch gagal parse.
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+// Jika terjadi error fatal/uncaught, tetap balikan JSON.
+set_exception_handler(function ($e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    exit;
+});
 
 // --- 1. KONEKSI ---
 $conn = mysqli_connect("localhost", "root", "", "pengaduan_sarana");
-if (!$conn) die(json_encode(["status" => "error", "message" => "Koneksi Gagal"]));
+if (!$conn) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Koneksi Gagal"]);
+    exit;
+}
+mysqli_set_charset($conn, 'utf8mb4');
+
+// Kesalahan mysqli jangan sampai output mentah (akan tetap dikonversi jadi JSON di handler)
+mysqli_report(MYSQLI_REPORT_OFF);
+
+
 
 $table  = $_GET['table'] ?? '';
 $action = $_GET['action'] ?? '';
@@ -266,6 +289,10 @@ if ($table) {
         $res = mysqli_query($conn, $sql);
         
         // Output Array Murni (Langsung [...]) agar script.js tidak error
+        if ($res === false) {
+            echo json_encode(["status" => "error", "message" => mysqli_error($conn)]);
+            exit;
+        }
         echo json_encode(mysqli_fetch_all($res, MYSQLI_ASSOC));
         exit;
     }
